@@ -3,11 +3,8 @@ import * as faceapi from "@vladmandic/face-api";
 import fs from "fs";
 import path from "path";
 
-// Carga el modelo de reconocimiento facial de Face-api
-// await faceapi.tf.setBackend("tensorflow");
-// await faceapi.tf.enableProdMode();
-// await faceapi.tf.ENV.set("DEBUG", false);
-// await faceapi.tf.ready();
+const DISTANCE_THRESHOLD = 0.5;
+
 
 const MODEL_URL = "./models";
 await faceapi.nets.ssdMobilenetv1.loadFromDisk(MODEL_URL);
@@ -102,7 +99,7 @@ async function trainModel(tenant) {
 
     // Entrena el modelo con los datos de las fotos etiquetadas
     console.info("labeled", labeledDescriptors);
-    const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors);
+    const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, DISTANCE_THRESHOLD);
 
     // Serializa el modelo entrenado en un archivo
     let tenantFile = path.join(MATCHERS_DIR, `${tenant}.json`);
@@ -152,5 +149,13 @@ async function recognizeFaces(tenant) {
     });
 }
 
-const trained = await trainModel("uejn");
-//recognizeFaces("uejn");
+
+var args = process.argv.slice(2);
+
+if ( args[0] === "train" ) { 
+    trainModel(args[1]);
+} else if ( args[0] === "find" ) {
+    recognizeFaces(args[1]);
+} else {
+    console.error("No se especificó una acción válida");
+}
